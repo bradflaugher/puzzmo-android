@@ -1,0 +1,79 @@
+name: Publish latest APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: latest-release
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Calculate version
+        id: version
+        shell: bash
+        run: |
+          release_date="$(date -u +%Y.%m.%d)"
+          epoch_day="$(($(date -u +%s) / 86400))"
+          version_name="${release_date}.${GITHUB_RUN_NUMBER}"
+          version_code="$((epoch_day * 1000 + GITHUB_RUN_NUMBER % 1000))"
+          echo "name=${version_name}" >> "$GITHUB_OUTPUT"
+          echo "code=${version_code}" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed release APK
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          RELEASE_KEYSTORE_FILE: keystore/puzzmo-release.jks
+          RELEASE_KEYSTORE_PASSWORD: puzzmo2026
+          RELEASE_KEY_ALIAS: puzzmo
+          RELEASE_KEY_PASSWORD: puzzmo2026
+        run: |
+          chmod +x gradlew
+          ./gradlew clean assembleRelease --no-daemon --stacktrace
+
+      - name: Prepare release asset
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/puzzmo.apk
+          ls -lh dist/puzzmo.apk
+
+      - name: Replace latest release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          # Only one release is kept — same pattern as free-library-nyt.
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest dist/puzzmo.apk \
+            --target "$GITHUB_SHA" \
+            --title "Latest (${VERSION_NAME})" \
+            --notes "Full-screen Puzzmo WebView APK (Android 16+) built from main on ${VERSION_NAME}.
+
+Install: download **puzzmo.apk**, open it on your phone, allow install from this source if prompted.
+
+- Opens https://www.puzzmo.com full screen
+- Login cookies stay in the app
+- Back goes through puzzle history
+- Only this latest release is kept on the repo" \
+            --latest

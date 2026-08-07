@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Puzzmo</string>
+    <string name="web_content">Puzzmo daily puzzles</string>
+    <string name="loading">Loading Puzzmo…</string>
+    <string name="error_title">Can\'t reach Puzzmo</string>
+    <string name="error_message">Check your connection, then try again.</string>
+    <string name="retry">Try again</string>
+    <string name="cannot_open_link">No app can open this link.</string>
+    <string name="offline_badge">You\'re offline</string>
+</resources>

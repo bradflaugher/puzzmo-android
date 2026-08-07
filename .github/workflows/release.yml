@@ -55,7 +55,6 @@ jobs:
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk dist/puzzmo.apk
-          ls -lh dist/puzzmo.apk
 
       - name: Replace latest release
         shell: bash
@@ -63,17 +62,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION_NAME: ${{ steps.version.outputs.name }}
         run: |
-          # Only one release is kept — same pattern as free-library-nyt.
           gh release delete latest --cleanup-tag --yes || true
           gh release create latest dist/puzzmo.apk \
             --target "$GITHUB_SHA" \
             --title "Latest (${VERSION_NAME})" \
-            --notes "Full-screen Puzzmo WebView APK (Android 16+) built from main on ${VERSION_NAME}.
-
-Install: download **puzzmo.apk**, open it on your phone, allow install from this source if prompted.
-
-- Opens https://www.puzzmo.com full screen
-- Login cookies stay in the app
-- Back goes through puzzle history
-- Only this latest release is kept on the repo" \
+            --notes "Full-screen Puzzmo WebView APK (Android 16+) built from main on ${VERSION_NAME}." \
             --latest

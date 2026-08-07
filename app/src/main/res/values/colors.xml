@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Warm editorial palette inspired by thoughtful puzzle apps -->
+    <!-- Official Puzzmo brand palette -->
+    <color name="puzzmo_gold">#FFC000</color>
+    <color name="puzzmo_navy">#1B1D2A</color>
     <color name="paper">#FFF8F1</color>
     <color name="paper_dim">#F0E6D8</color>
-    <color name="ink">#1A1410</color>
+    <color name="ink">@color/puzzmo_navy</color>
     <color name="ink_muted">#6B5E52</color>
     <color name="coral">#E4572E</color>
     <color name="coral_soft">#F28C6A</color>
     <color name="teal">#1F7A6B</color>
-    <color name="splash_bg">#1A1410</color>
-    <color name="progress">#E4572E</color>
+    <color name="splash_bg">@color/puzzmo_navy</color>
+    <color name="progress">@color/puzzmo_gold</color>
 </resources>

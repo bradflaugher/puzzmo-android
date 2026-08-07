@@ -48,7 +48,6 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setupEdgeToEdge();
 
         progress = findViewById(R.id.progress);
         webView = findViewById(R.id.web_view);
@@ -56,6 +55,9 @@ public final class MainActivity extends Activity {
         errorView = findViewById(R.id.error_view);
         errorDetail = findViewById(R.id.error_detail);
         Button retry = findViewById(R.id.retry_button);
+
+        // Insets after views are bound — pad the root, never the WebView.
+        setupSystemBars();
 
         setupWebView();
         retry.setOnClickListener(v -> loadPuzzmo(true));
@@ -117,9 +119,18 @@ public final class MainActivity extends Activity {
         super.onDestroy();
     }
 
-    private void setupEdgeToEdge() {
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
-        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+    /**
+     * Keep content clear of the status bar / cutout / gesture nav.
+     *
+     * Critical: pad the root container, not the WebView. WebView.setPadding
+     * does not reliably push HTML content below the system bars on Pixel
+     * (and other devices), so the page bleeds into the info bar.
+     */
+    private void setupSystemBars() {
+        final int paper = getColor(R.color.paper);
+        getWindow().setStatusBarColor(paper);
+        getWindow().setNavigationBarColor(paper);
+
         WindowInsetsController controller = getWindow().getInsetsController();
         if (controller != null) {
             controller.setSystemBarsAppearance(
@@ -134,16 +145,16 @@ public final class MainActivity extends Activity {
         root.setOnApplyWindowInsetsListener((view, insets) -> {
             android.graphics.Insets bars = insets.getInsets(
                     WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-            // Pad the web surface so puzzle UI never sits under the cutout / gesture bar.
-            webView.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            progress.setTranslationY(bars.top);
-            errorView.setPadding(
-                    errorPad + bars.left,
-                    errorPad + bars.top,
-                    errorPad + bars.right,
-                    errorPad + bars.bottom);
+            // Root padding shrinks the layout box for every child (WebView,
+            // progress, splash, error). Web content cannot draw under bars.
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            // Error overlay already has 32dp XML padding; add bars so text
+            // stays centered in the safe area without double-counting bars
+            // (bars are already on the root).
+            errorView.setPadding(errorPad, errorPad, errorPad, errorPad);
             return WindowInsets.CONSUMED;
         });
+        root.requestApplyInsets();
     }
 
     @SuppressLint("SetJavaScriptEnabled")
